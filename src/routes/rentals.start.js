@@ -31,8 +31,12 @@ router.get('/:rental_id/pay-deposit', async function (req, res) {
 
 router.get('/:rental_id/return-deposit', async function (req, res) {
   const { rental_id } = req.params;
-  const rental = await knex('rentals').first().where('rental_id', rental_id);
+  const dto = await knex('rentals').first().where('rental_id', rental_id);
 
+  const { car_id, client_id, deposit, state } = dto;
+
+  const itsRental = new Rental(rental_id, car_id, client_id, deposit, state)
+  
   if (rental.state !== 'DEPOSIT_PAID' && rental.state !== 'CAR_RETURNED') {
     debug('Method not allow on rental: ' + rental_id);
     return res.redirect('/rentals');
@@ -40,7 +44,7 @@ router.get('/:rental_id/return-deposit', async function (req, res) {
 
   rental.state = 'DEPOSIT_SETTLED';
 
-  await knex('rentals').where('rental_id', rental_id).update(rental);
+  await knex('rentals').where('rental_id', rental_id).update({ state: itsRental.state });
 
   res.redirect('/rentals');
 });
